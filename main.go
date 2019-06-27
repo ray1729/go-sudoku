@@ -5,47 +5,19 @@ import (
 	"strings"
 )
 
-type IntSet map[int]struct{}
+type Set uint16
 
-func NewIntSet(xs []int) IntSet {
-	s := make(IntSet)
-	for _, x := range xs {
-		s[x] = struct{}{}
-	}
-	return s
+func (s *Set) Add(n uint) {
+	*s |= (1 << n)
 }
 
-func (s IntSet) Add(i int) IntSet {
-	_, ok := s[i]
-	if !ok {
-		s[i] = struct{}{}
-	}
-	return s
+func (s *Set) Contains(n uint) bool {
+	return *s&(1<<n) != 0
 }
 
-func (s IntSet) Remove(i int) IntSet {
-	if _, ok := s[i]; ok {
-		delete(s, i)
-	}
-	return s
-}
+type Grid [81]uint
 
-func (s IntSet) Contains(i int) bool {
-	_, ok := s[i]
-	return ok
-}
-
-func (s IntSet) Elements() []int {
-	elements := make([]int, 0, len(s))
-	for v := range s {
-		elements = append(elements, v)
-	}
-	return elements
-}
-
-type Grid [81]int
-
-func (g Grid) At(row, col int) int {
+func (g Grid) At(row, col int) uint {
 	return g[row*9+col]
 }
 
@@ -63,7 +35,7 @@ func (g Grid) String() string {
 	return sb.String()
 }
 
-func (g Grid) Neighbours(i int) IntSet {
+func (g Grid) Neighbours(i int) *Set {
 	// Grid is stored in row-major order, so i = row * 9 + col
 	col := i % 9
 	row := (i - col) / 9
@@ -71,7 +43,7 @@ func (g Grid) Neighbours(i int) IntSet {
 	tlRow := (row / 3) * 3
 	tlCol := (col / 3) * 3
 
-	neighbours := make(IntSet)
+	neighbours := new(Set)
 
 	// Neighbouring row
 	for c := 0; c < 9; c++ {
@@ -108,7 +80,7 @@ func (g Grid) FirstUnsolved() int {
 	return -1
 }
 
-func (g Grid) WithElementAt(i int, v int) Grid {
+func (g Grid) WithElementAt(i int, v uint) Grid {
 	g[i] = v
 	return g
 }
@@ -125,7 +97,7 @@ func (g Grid) Solve() (Grid, error) {
 			return g, nil
 		}
 		neighbours := g.Neighbours(i)
-		for v := 1; v < 10; v++ {
+		for v := uint(1); v < 10; v++ {
 			if neighbours.Contains(v) {
 				continue
 			}
